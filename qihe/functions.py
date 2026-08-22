@@ -75,8 +75,8 @@ def create_default_mapping_file(filename, log_activity):
 # Component Mapping Line:
 #   1 or 2, Feeder ID, Component Name(s)
 #   - '1 or 2' specifies the nozzle number.
-#   - 'Feeder ID' is the feeder location, formatted as Lxx or Bxx
-#      (e.g., L1, B12).
+#   - 'Feeder ID (:SIZE)' is the feeder location, formatted as Lxx or Bxx. Component 
+#      size can be added to feeder L1, B12 or L1:0402, B12:0603.
 #   - 'Component Name(s)' are the names of components, separated by colons (:).
 #     These names should match the component values in the PCB design.
 #   Example: 1, L1, 0n1:100nF:100nf:0.1uF:0.1uf

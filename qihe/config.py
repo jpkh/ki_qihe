@@ -38,5 +38,5 @@ def_have_separator = False
 def_output_file_top = ""
 def_output_file_bottom = ""
 def_CompopentMapping = "component_mapping.txt"
-def_version = "1.0"
-def_date = "2024-04-07"
+def_version = "1.0.2"
+def_date = "2025-09-25"
