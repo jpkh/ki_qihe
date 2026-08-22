@@ -12,10 +12,11 @@ The QIHE PnP Coords Processor is a plugin for KiCAD designed to automate the cre
 
 **Installation**
 
-1. Download the Plugin:
-- Navigate to the Releases section of this repository and download the latest version.
-2. Install the Plugin in KiCAD:
-Restart KiCAD to load the plugin.
+Install via KiCad's Plugin and Content Manager (PCM):
+
+1. In the KiCad main window, open Tools -> Plugin and Content Manager.
+2. Either add the repository hosting this plugin, or use "Install from File..." and select the release zip.
+3. Apply changes and restart KiCad (or the PCB editor) to load the plugin.
 
 **Usage**
 
@@ -46,7 +47,7 @@ If you encounter any problems or have questions about using the plugin, please c
 
 **License**
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the GPL-3.0 License - see the LICENSE file for details.
 
 **Acknowledgments**
 
