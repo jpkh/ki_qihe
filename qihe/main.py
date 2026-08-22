@@ -33,14 +33,15 @@ from .config import (
     def_optionsFileName,
     def_top_fileext,
     def_bottom_fileext,
-    def_have_separator,
+    def_log_verbosity,
+    def_mapping_location,
     def_CompopentMapping,
     def_version,
     def_date
 )
 
 
-class KiQIHEMain(wx.Frame):
+class KiQIHEMain(wx.Dialog):
     def __init__(self):
         wx.Dialog.__init__(
             self,
@@ -215,6 +216,7 @@ class KiQIHEMain(wx.Frame):
         self.ACT_BTN_1.Bind(wx.EVT_BUTTON, self.onForceMappingButtonClick)
         self.ACT_BTN_4.Bind(wx.EVT_BUTTON, self.onSaveOptionsButtonClick)
         self.editButton.Bind(wx.EVT_BUTTON, self.onEditMappingFile)
+        self.Bind(wx.EVT_CLOSE, self.onClose)
 
         # Bind events to settings controls to trigger the save reminder
         self.bindSettingsEvents()
@@ -260,8 +262,7 @@ class KiQIHEMain(wx.Frame):
 
     # Event handler for the window close event
     def onClose(self, event):
-        self.Destroy()  # Ensure the frame is destroyed properly
-        event.Skip()
+        self.Destroy()  # Ensure the dialog is destroyed properly
 
     # Bind events to settings controls to trigger the save reminder
     def bindSettingsEvents(self):
@@ -361,14 +362,14 @@ class KiQIHEMain(wx.Frame):
 
     # Create default settings if the settings file is not found
     def create_default_settings(self):
-        default_settings = {"mapping_location": 0,
+        # Keys must match what apply_settings() reads.
+        default_settings = {"mapping_location": def_mapping_location,
                             "process_top_layer": True,
                             "process_bottom_layer": True,
-                            "top_fileext": def_top_fileext,
-                            "bottom_fileext": def_bottom_fileext,
-                            "log_verbosity": 0,
-                            "have_separator": def_have_separator,
-                            "CompopentMapping": def_CompopentMapping}
+                            "top_layer_prefix": def_top_fileext,
+                            "bottom_layer_prefix": def_bottom_fileext,
+                            "log_verbosity": def_log_verbosity,
+                            "ComponentMapping": def_CompopentMapping}
 
         self.apply_settings(default_settings)
         self.save_settings()
@@ -426,6 +427,7 @@ class KiQIHEMain(wx.Frame):
             self.chkTop.SetValue(settings.get("process_top_layer", True))
             self.chkBottom.SetValue(settings.get("process_bottom_layer", True))
 
+            self.txtMappingFileName.SetValue(settings.get("ComponentMapping", def_CompopentMapping))
             self.txtTopPrefix.SetValue(settings.get("top_layer_prefix", def_top_fileext))
             self.txtBottomPrefix.SetValue(settings.get("bottom_layer_prefix", def_bottom_fileext))
 

@@ -18,46 +18,6 @@
 #  - MacOS
 #
 
-import pcbnew  # type: ignore
-import os
-import wx
-import json
-
-
-def get_user_options_file_path():
-    boardFilePath = pcbnew.GetBoard().GetFileName()
-    return os.path.join(os.path.dirname(boardFilePath), optionsFileName)
-
-
-def load_user_options(default_options):
-    try:
-        with open(get_user_options_file_path(), "r") as f:
-            user_options = json.load(f)
-    except FileNotFoundError:
-        user_options = default_options
-    except json.JSONDecodeError:
-        user_options = default_options
-
-    # merge the user options with the default options
-    options = default_options.copy()
-    options.update(user_options)
-    return options
-
-
-def save_user_options(options):
-    try:
-        with open(get_user_options_file_path(), "w") as f:
-            json.dump(options, f)
-    except FileNotFoundError:
-        wx.MessageBox("Error saving user options",
-                      "Error",
-                      wx.OK | wx.ICON_ERROR)
-    except Exception as e:
-        wx.MessageBox(f"Error saving user options: {str(e)}",
-                      "Error",
-                      wx.OK | wx.ICON_ERROR)
-
-
 # Create a default mapping file if it does not exist
 # or if the FORCEMAPPING flag is set
 def create_default_mapping_file(filename, log_activity):
