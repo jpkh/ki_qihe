@@ -90,8 +90,8 @@ Get-ChildItem $PluginDir -File | Where-Object {
 # 3. PCM icon: 64x64 -> resources/icon.png
 Copy-Item $Icon64 -Destination (Join-Path $bResources "icon.png")
 
-# 4. package metadata
-Copy-Item $MetadataFile -Destination $build
+# 4. package metadata (always named metadata.json in the archive)
+Copy-Item $MetadataFile -Destination (Join-Path $build "metadata.json")
 
 # 5. zip with forward-slash entry names (ISO 21320-1)
 if (Test-Path $zipPath) { Remove-Item $zipPath }
