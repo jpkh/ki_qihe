@@ -1,54 +1,108 @@
-# KiCAD plugin for QIHE PnP machines. "Ki-QIHE"
-QIHE PnP Coords Processor for KiCAD
-The QIHE PnP Coords Processor is a plugin for KiCAD designed to automate the creation of coordinate files for QIHE pick-and-place machines. This plugin simplifies the process of setting up manufacturing files for your PCB designs, enhancing the efficiency of your production line.
+# Ki-QIHE — QIHE PnP Coords Processor for KiCad
 
-**Features**
+![Ki-QIHE dialog](assets/Ki_QIHE_UI.png)
 
-- Layer Selection: Choose between top, bottom, or both layers for generating coordinates.
-- Component Mapping: Define custom mappings for components to specific feeders and nozzles.
-- Prefix Management: Set custom file prefixes for the generated coordinate files.
-- Log Verbosity Control: Adjust the level of detail in the plugin's logs to suit your needs.
-- Direct Mapping File Editing: Open and edit the component mapping file directly through the plugin interface.
+A KiCad PCB-editor plugin that generates coordinate files for QIHE tabletop
+pick-and-place machines directly from your board. Map component values to
+nozzles and feeders — including size-specific feeders — and get machine-ready
+CSV files for the top and bottom layers.
 
-**Installation**
+## Features
 
-Install via KiCad's Plugin and Content Manager (PCM):
+- Generate coordinates for the top, bottom, or both layers, with custom file prefixes.
+- Component mapping: value → nozzle + feeder, with **size-specific feeders** (`L1:0402`, `B12:0603`).
+- Imperial **and** metric size detection (0402/0603/0805/… and 1005/1608/2012/…).
+- Priority (`P`) and exclude (`E`) rules with regex patterns.
+- Optional `FIDORIG` fiducial as the coordinate origin (falls back to the page origin).
+- Respects KiCad footprint attributes (excluded from position files / BOM).
+- Mapping file editable from the dialog; settings remembered between sessions.
+- Activity log with verbosity levels 0–3.
 
-1. In the KiCad main window, open Tools -> Plugin and Content Manager.
-2. Either add the repository hosting this plugin, or use "Install from File..." and select the release zip.
-3. Apply changes and restart KiCad (or the PCB editor) to load the plugin.
+## Compatibility
 
-**Usage**
+- KiCad 8.0 – 10.x (installed and verified on KiCad 10).
+- Classic SWIG `pcbnew` action plugin; Windows, Linux, and macOS.
 
-Once installed, the QIHE PnP Coords Processor can be accessed from plugins toolbar in KiCAD.
+## Installation
 
-**Main Interface**
+Via the KiCad Plugin and Content Manager (PCM):
 
-- Generate COORDS Button: Initiates the coordinate file generation process for selected layers.
-- Top/Bottom Checkboxes: Select whether to generate coordinates for the top layer, bottom layer, or both.
-- Top/Bottom Layer Prefix: Set custom prefixes for the generated files to help identify them easily.
+1. KiCad main window → Tools → Plugin and Content Manager.
+2. Search for **KI-Qihe** (official repository), or use **Install from File…**
+   with a release zip from [GitHub Releases](https://github.com/jpkh/ki_qihe/releases).
+3. Apply changes and restart the PCB editor.
 
-**Advanced Settings**
+## Usage
 
-- Mapping File Location: Choose where to save the component mapping file - either in the plugin folder or the PCB project folder.
-- Log Verbosity: Select the level of log detail from minimal (0) to detailed debug information (3).
+Open a board in the PCB editor and click the QIHE toolbar button, select the
+layers and options, then press **Generate COORDS**.
 
-**Editing the Component Mapping File**
+Files are written next to the board as `<board>_TOP-COORDS.csv` and
+`<board>_BOTTOM-COORDS.csv` (the `TOP-COORDS`/`BOTTOM-COORDS` parts are
+configurable prefixes).
 
-- Edit Button: Opens the component mapping file in your system's default text editor, allowing you to make changes directly.
+### Dialog overview
 
-**Contributing**
+- **Generate COORDS** — runs generation for the checked layers.
+- **Top / Bottom checkboxes and prefixes** — which layers to process and what to call the files.
+- **Activity LOG** — live progress; verbosity 0 (minimal) to 3 (debug).
+- **Mapping File Location** — plugin folder or PCB project folder; the file
+  name is configurable and **Edit** opens it in your default editor.
+- **Gen Mapping** — (re)creates the default mapping file.
+  ⚠️ Overwrites the current file — use with caution.
+- **Save Options** — persists the current dialog settings.
 
-Contributions are welcome! Please feel free to submit pull requests, or file issues for bugs, feature requests, and suggestions through the GitHub Issues page.
+## Component mapping file
 
-**Support**
+Default name `component_mapping.txt`, created automatically on first use.
+Reference copy with examples: [`assets/component_mapping.txt`](assets/component_mapping.txt).
 
-If you encounter any problems or have questions about using the plugin, please check the Wiki or file an issue.
+| Line type | Syntax | Meaning |
+|---|---|---|
+| Mapping | `nozzle, feeder[:SIZE], value[:alias]…` | `nozzle` is `1` or `2`; `feeder` is `Lxx` or `Bxx`; optional `:SIZE` tag; colon-separated value aliases |
+| Exclude | `E, , regex[:regex]…` | components whose value matches a regex are left out |
+| Priority | `P, , regex[:regex]…` | matching components are listed first in the output |
 
-**License**
+Examples:
 
-This project is licensed under the GPL-3.0 License - see the LICENSE file for details.
+```
+1, L20:0402, 0u1:0.1u:100nF:0.1uF:0.1uf
+1, L12:0402, 1k:1K
+2, B3:0603, 120R:120r
+E, , NC:TP
+P, , FIDUCIAL:TESTPOINT
+```
 
-**Acknowledgments**
+Notes:
 
-Thanks to all contributors who have helped test, refine, and extend the functionality of this plugin.
+- Size tags accept imperial codes (`0402`, `0603`, `0805`, …) and metric codes
+  (`1608` → `0603`, `2012` → `0805`, …).
+- A feeder without `:SIZE` matches any size; a size-specific entry wins when
+  the footprint's size is detected.
+- Value aliases are matched as written — add every spelling you use, separated
+  by `:`. Exclude/priority patterns are case-insensitive regex.
+- A footprint whose reference starts with `FIDORIG` is used as the coordinate
+  origin; otherwise the page origin is used and a warning is logged.
+
+### Output columns
+
+`Designator, NozzleNum, StackNum, Mid X, Mid Y, Rotation, Height, Speed,
+Vision, Check, Explanation`
+
+## Contributing
+
+Contributions are welcome! Please open pull requests, or file issues for bugs,
+feature requests, and suggestions through the
+[GitHub Issues](https://github.com/jpkh/ki_qihe/issues) page.
+
+## Support
+
+If you encounter problems or have questions, please file an issue.
+
+## License
+
+GPL-3.0 — see [LICENSE](LICENSE).
+
+## Acknowledgments
+
+Thanks to all contributors who have helped test, refine, and extend this plugin.
