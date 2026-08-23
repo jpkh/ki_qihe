@@ -24,5 +24,5 @@ def_bottom_fileext = 'BOTTOM-COORDS'
 def_log_verbosity = 0
 def_mapping_location = 0
 def_CompopentMapping = "component_mapping.txt"
-def_version = "1.0.2"
-def_date = "2025-09-25"
+def_version = "1.1.0"
+def_date = "2026-08-23"
