@@ -23,6 +23,11 @@ CSV files for the top and bottom layers.
 - KiCad 8.0 – 10.x (installed and verified on KiCad 10).
 - Classic SWIG `pcbnew` action plugin; Windows, Linux, and macOS.
 
+## Supported machines
+
+- QIHE TVM-802A running the Qihe placement software
+- QIHE TVM-802B running the Qihe placement software
+
 ## Installation
 
 Via the KiCad Plugin and Content Manager (PCM):
