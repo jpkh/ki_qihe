@@ -34,7 +34,6 @@ from .config import (
     def_top_fileext,
     def_bottom_fileext,
     def_log_verbosity,
-    def_mapping_location,
     def_CompopentMapping,
     def_version,
     def_date
@@ -128,34 +127,31 @@ class KiQIHEMain(wx.Dialog):
         # Add verbosity panel below the log panel
         logPanel.Add(verbosityPanel, 0, wx.TOP | wx.EXPAND, 10)
 
-        # Mapping file location with text box
+        # Mapping file path with browse and edit buttons
         mappingPanel = wx.StaticBoxSizer(wx.HORIZONTAL, leftPanel, "Mapping File Location:")
-        self.radioBox = wx.RadioBox(
-            leftPanel, choices=["Plugin folder", "PCB folder"],
-            majorDimension=1, style=wx.RA_SPECIFY_ROWS
-        )
 
-        # Create a horizontal sizer for the filename label, text control, and edit button
-        mappingNameSizer = wx.BoxSizer(wx.HORIZONTAL)
+        default_map_path = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), def_CompopentMapping)
+        self.txtMappingFilePath = wx.TextCtrl(leftPanel,
+                                              value=default_map_path)
+        self.txtMappingFilePath.SetToolTip("Full path to the component mapping file")
 
-        self.txtMappingFileNameLabel = wx.StaticText(leftPanel, label="Name:")
-        self.txtMappingFileName = wx.TextCtrl(leftPanel, value=def_CompopentMapping, size=(180, -1))
-        self.txtMappingFileName.SetToolTip("Name of the component mapping file")
+        self.browseButton = wx.Button(leftPanel, label="...", size=(34, -1))
+        self.browseButton.SetToolTip("Browse for the component mapping file")
 
         self.editButton = wx.Button(leftPanel, label="Edit", size=(70, -1))
         self.editButton.SetForegroundColour(wx.Colour('blue'))
 
-        # Add to sizer with alignment flags
-        mappingNameSizer.Add(self.txtMappingFileNameLabel, flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border=5)
-        mappingNameSizer.Add(self.txtMappingFileName, proportion=1, flag=wx.ALIGN_CENTER_VERTICAL)
-        mappingNameSizer.Add(self.editButton, flag=wx.ALIGN_CENTER_VERTICAL)
+        mappingPanel.Add(self.txtMappingFilePath, 1,
+                         wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
+        mappingPanel.Add(self.browseButton, 0,
+                         wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
+        mappingPanel.Add(self.editButton, 0,
+                         wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
 
-        # Bind the edit button click event
+        # Bind the edit and browse button events
         self.editButton.Bind(wx.EVT_BUTTON, self.onEditMappingFile)
-
-        # Add the radio box and the filename sizer to the mapping panel
-        mappingPanel.Add(self.radioBox, 0, wx.ALL | wx.EXPAND, 5)
-        mappingPanel.Add(mappingNameSizer, 1, wx.EXPAND | wx.ALL, 5)
+        self.browseButton.Bind(wx.EVT_BUTTON, self.onBrowseMappingFile)
 
         # Add controls to left sizer
         leftSizer.Add(self.mGenerateButton, 0, wx.ALL, 5)
@@ -216,6 +212,7 @@ class KiQIHEMain(wx.Dialog):
         self.ACT_BTN_1.Bind(wx.EVT_BUTTON, self.onForceMappingButtonClick)
         self.ACT_BTN_4.Bind(wx.EVT_BUTTON, self.onSaveOptionsButtonClick)
         self.editButton.Bind(wx.EVT_BUTTON, self.onEditMappingFile)
+        self.browseButton.Bind(wx.EVT_BUTTON, self.onBrowseMappingFile)
         self.Bind(wx.EVT_CLOSE, self.onClose)
 
         # Bind events to settings controls to trigger the save reminder
@@ -229,14 +226,7 @@ class KiQIHEMain(wx.Dialog):
         # Log activity
         # self.log_activity("Attempting to edit mapping file...")
 
-        # Determine the base directory based on radio box selection
-        if self.radioBox.GetSelection() == 0:
-            base_path = os.path.dirname(os.path.realpath(__file__))  # Plugin folder
-        else:
-            base_path = os.path.dirname(pcbnew.GetBoard().GetFileName())  # PCB folder
-
-        # Combine the base path with the filename from the text control
-        filepath = os.path.join(base_path, self.txtMappingFileName.GetValue())
+        filepath = self.txtMappingFilePath.GetValue().strip()
 
         # Log the calculated file path
         # self.log_activity(f"Calculated file path: {filepath}")
@@ -260,6 +250,18 @@ class KiQIHEMain(wx.Dialog):
         except Exception as e:
             self.log_activity(f"Failed to open file: {str(e)}")
 
+    def onBrowseMappingFile(self, event):
+        dlg = wx.FileDialog(
+            self, "Select component mapping file",
+            defaultFile=self.txtMappingFilePath.GetValue().strip(),
+            wildcard="Text files (*.txt)|*.txt|All files (*.*)|*.*")
+        try:
+            if dlg.ShowModal() == wx.ID_OK:
+                self.txtMappingFilePath.SetValue(dlg.GetPath())
+                self.onSettingChanged(None)
+        finally:
+            dlg.Destroy()
+
     # Event handler for the window close event
     def onClose(self, event):
         self.Destroy()  # Ensure the dialog is destroyed properly
@@ -267,8 +269,7 @@ class KiQIHEMain(wx.Dialog):
     # Bind events to settings controls to trigger the save reminder
     def bindSettingsEvents(self):
         """Bind events to trigger changes."""
-        self.radioBox.Bind(wx.EVT_RADIOBOX, self.onSettingChanged)
-        self.txtMappingFileName.Bind(wx.EVT_TEXT, self.onSettingChanged)
+        self.txtMappingFilePath.Bind(wx.EVT_TEXT, self.onSettingChanged)
         self.chkTop.Bind(wx.EVT_CHECKBOX, self.onSettingChanged)
         self.chkBottom.Bind(wx.EVT_CHECKBOX, self.onSettingChanged)
         self.txtTopPrefix.Bind(wx.EVT_TEXT, self.onSettingChanged)
@@ -297,12 +298,10 @@ class KiQIHEMain(wx.Dialog):
     def onGenerateButtonClick(self, event):
         print("Generate button clicked")
         self.log_activity("Generate button was clicked.")  # Ensure this shows in the GUI
-        mapping_location = self.radioBox.GetSelection()  # 0 for Plugin folder, 1 for PCB folder
-        options = {"mapping_location": mapping_location,
+        options = {'mapping_file_path': self.txtMappingFilePath.GetValue().strip(),
                    'process_top_layer': self.chkTop.IsChecked(),
                    'process_bottom_layer': self.chkBottom.IsChecked(),
                    'verbosity_level': self.get_verbosity_level(),  # Add verbosity level to options
-                   'mapping_file_name': self.txtMappingFileName.GetValue(),
                    'top_fileext': self.txtTopPrefix.GetValue(),
                    'bottom_fileext': self.txtBottomPrefix.GetValue()
                    }
@@ -312,13 +311,7 @@ class KiQIHEMain(wx.Dialog):
 
     # Event handler for the Force Mapping button
     def onForceMappingButtonClick(self, event):
-        mapping_location = self.radioBox.GetSelection()  # 0 for Plugin folder, 1 for PCB folder
-        mapping_file_name = self.txtMappingFileName.GetValue()
-        if mapping_location == 0:
-            path = os.path.dirname(os.path.realpath(__file__))
-        else:
-            path = os.path.dirname(pcbnew.GetBoard().GetFileName())
-        filename = os.path.join(path, mapping_file_name)
+        filename = self.txtMappingFilePath.GetValue().strip()
         try:
             create_default_mapping_file(filename, self.log_activity)
             # self.mLogTextCtrl.AppendText(
@@ -363,13 +356,14 @@ class KiQIHEMain(wx.Dialog):
     # Create default settings if the settings file is not found
     def create_default_settings(self):
         # Keys must match what apply_settings() reads.
-        default_settings = {"mapping_location": def_mapping_location,
+        default_settings = {"mapping_file_path": os.path.join(
+                                os.path.dirname(os.path.abspath(__file__)),
+                                def_CompopentMapping),
                             "process_top_layer": True,
                             "process_bottom_layer": True,
                             "top_layer_prefix": def_top_fileext,
                             "bottom_layer_prefix": def_bottom_fileext,
-                            "log_verbosity": def_log_verbosity,
-                            "ComponentMapping": def_CompopentMapping}
+                            "log_verbosity": def_log_verbosity}
 
         self.apply_settings(default_settings)
         self.save_settings()
@@ -388,25 +382,23 @@ class KiQIHEMain(wx.Dialog):
 
         # Debug each setting retrieval to catch errors
         try:
-            mapping_location = self.radioBox.GetSelection()
             top_layer = self.chkTop.IsChecked()
             bottom_layer = self.chkBottom.IsChecked()
             top_prefix = self.txtTopPrefix.GetValue()
             bottom_prefix = self.txtBottomPrefix.GetValue()
             # verbosity = self.get_verbosity_level(),  # Use the new method here
-            componentMapping = self.txtMappingFileName.GetValue()
+            mapping_file_path = self.txtMappingFilePath.GetValue().strip()
 
             verbosity_level = self.get_verbosity_level()
             log_message(f"Current verbosity level: {verbosity_level}", log_type="DEBUG")  # Debug message
 
             settings = {
-                "mapping_location": mapping_location,
+                "mapping_file_path": mapping_file_path,
                 "process_top_layer": top_layer,
                 "process_bottom_layer": bottom_layer,
                 "top_layer_prefix": top_prefix,
                 "bottom_layer_prefix": bottom_prefix,
-                "log_verbosity": verbosity_level,
-                "ComponentMapping": componentMapping
+                "log_verbosity": verbosity_level
             }
 
             log_message(f"Settings to be saved: {settings}", log_type="DEBUG")
@@ -423,11 +415,31 @@ class KiQIHEMain(wx.Dialog):
     # Apply settings to the GUI controls
     def apply_settings(self, settings):
         try:
-            self.radioBox.SetSelection(settings["mapping_location"])
             self.chkTop.SetValue(settings.get("process_top_layer", True))
             self.chkBottom.SetValue(settings.get("process_bottom_layer", True))
 
-            self.txtMappingFileName.SetValue(settings.get("ComponentMapping", def_CompopentMapping))
+            # New-style full path; fall back to the legacy
+            # mapping_location + ComponentMapping keys of older options files.
+            default_map_path = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                def_CompopentMapping)
+            if "mapping_file_path" in settings:
+                self.txtMappingFilePath.SetValue(
+                    str(settings["mapping_file_path"]))
+            elif "ComponentMapping" in settings:
+                if int(settings.get("mapping_location", 0)) == 0:
+                    base = os.path.dirname(os.path.abspath(__file__))
+                else:
+                    try:
+                        base = os.path.dirname(
+                            pcbnew.GetBoard().GetFileName())
+                    except Exception:
+                        base = ""
+                self.txtMappingFilePath.SetValue(os.path.join(
+                    base, settings["ComponentMapping"]))
+            else:
+                self.txtMappingFilePath.SetValue(default_map_path)
+
             self.txtTopPrefix.SetValue(settings.get("top_layer_prefix", def_top_fileext))
             self.txtBottomPrefix.SetValue(settings.get("bottom_layer_prefix", def_bottom_fileext))
 

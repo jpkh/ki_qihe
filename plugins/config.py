@@ -25,4 +25,4 @@ def_log_verbosity = 0
 def_mapping_location = 0
 def_CompopentMapping = "component_mapping.txt"
 def_version = "1.1.2"
-def_date = "2026-08-25"
+def_date = "2026-11-13"

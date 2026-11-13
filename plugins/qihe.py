@@ -72,6 +72,10 @@ class QiHeProcess(Thread):
 
     # Get the path to the mapping file
     def get_mapping_file_path(self):
+        path = (self.options.get("mapping_file_path") or "").strip()
+        if path:
+            return path
+        # Legacy options: mapping_location + mapping_file_name
         mapping_location = self.options.get("mapping_location", 0)  # Default to 0 if not set
         mapping_file_name = self.options.get("mapping_file_name", def_CompopentMapping)
         if mapping_location == 0:  # Plugin Folder
